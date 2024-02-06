@@ -69,6 +69,23 @@ window.gcm = {
 	
 	// Console Log Debugg 설정 (DEBUG_MODE가 false이면 Console 객체를 통해서 남긴 로그가 개발자 도구 Console 창에 남지 않도록 함 
 	DEBUG_MODE : true
+	
+	
+	//### 별도 추가 설정 START #########################
+	
+	//Window.onBeforeUnload 이벤트 발생 시 페이지를 떠날 것인지 확인 하는 옵션 (true: 동작, false: 미동작)
+	, IS_BEFORE_UNLOAD : true
+	
+	//history back 기능 수행 옵션 (true: 동작, false: 미동작) 
+	, IS_HISTORY_BACK : true
+	
+	//close 시 팝업 옵션 (true: 일반, false: wframe) 
+	, IS_CLOSE_BASIC : false
+	
+	, PROCESS_MSG : "해당 작업을 처리중입니다"
+	
+	//### 별도 추가 설정 END ###########################
+	
 };
 
 
@@ -602,13 +619,23 @@ gcm.win.openPopup = function($p, url, opt, data) {
 			var popupWindow = $p.getPopupWindow(this.id);
 			var isClose = true;
 			
-			if (popupWindow.$p.getFrameId() === null) {
-				if (typeof $p.main().scwin.closeBeforePage === "function") {
-					isClose = $p.main().scwin.closeBeforePage(window.$p.main().$p.getFrame());
+			var popupFrame;
+			if ( popupWindow.$p.getFrameId() === null ){
+				popupFrame = window.$p.top().$p.getFrame();
+			} else {
+				popupFrame = popupWindow.$p.getFrame();
+			}
+			
+			if ( gcm.IS_CLOSE_BASIC ){
+				if ( typeof $p.top().scwin.closeBeforePage === "function" ){
+					isClose = $p.top().scwin.closeBeforePage( popupFrame );
 				}
 			} else {
-				if (typeof $p.main().scwin.closeBeforePage === "function") {
-					isClose = $p.main().scwin.closeBeforePage(popupWindow.$p.getFrame());
+				if ( typeof $p.top().scwin.closeBeforePage === "function" ){
+					isClose = com.util.isEmpty(popupFrame.getUserData("close")) ? false : popupFrame.getUserData("close");
+					if ( !isClose ){
+						isClose = $p.top().scwin.closeBeforePage( popupFrame );
+					}
 				}
 			}
 
@@ -859,10 +886,12 @@ gcm.win.processCommonData = function($p) {
  * @example gcm.win._setHistoryBackEvent();
  */
 gcm.win.setHistoryBackEvent = function() {
-	if (window.addEventListener) {
-		window.addEventListener("popstate", gcm.win.changePageState);
-	} else {
-		window.attachEvent("popstate", gcm.win.changePageState);
+	if ( gcm.IS_HISTORY_BACK === true ) {	
+		if (window.addEventListener) {
+			window.addEventListener("popstate", gcm.win.changePageState);
+		} else {
+			window.attachEvent("popstate", gcm.win.changePageState);
+		}
 	}
 };
 
@@ -877,11 +906,14 @@ gcm.win.setHistoryBackEvent = function() {
 gcm.win.pushState(option.dataObject.data);
  */
 gcm.win.pushState = function(data) {
-	if (data.menuInfo.menuCode === "MAIN") {
-		history.pushState({ "data" : data }, data.menuInfo.menuNm, gcm.CONTEXT_PATH + "/");
-	} else {
-		history.pushState({ "data" : data }, data.menuInfo.menuNm, "?menuCd=" + data.menuInfo.menuCode);
+	if ( gcm.IS_HISTORY_BACK === true ) {
+		if (data.menuInfo.menuCode === "MAIN") {
+			history.pushState({ "data" : data }, data.menuInfo.menuNm, gcm.CONTEXT_PATH + "/");
+		} else {
+			history.pushState({ "data" : data }, data.menuInfo.menuNm, "?menuCd=" + data.menuInfo.menuCode);
+		}
 	}
+	
 };
 
 
@@ -895,12 +927,14 @@ gcm.win.pushState = function(data) {
 gcm.win.changePageState();
  */
 gcm.win.changePageState = function() {
-	if(!com.util.isEmpty(history.state) && !com.util.isEmpty(history.state.data) && !com.util.isEmpty(history.state.data.menuInfo)){
-		var options = {};
-		options.isHistory = false;
-		var data = history.state.data;
-		$p.main().wfm_side.getWindow().trv_menu.findNodeByValue(data.menuInfo.menuCode, true);
-		gcm.win.openMenu($p.main().$p, data.menuInfo.menuNm, data.menuInfo.src, data.menuInfo.menuCode, data.param, options);
+	if ( gcm.IS_HISTORY_BACK === true ) {	
+		if(!com.util.isEmpty(history.state) && !com.util.isEmpty(history.state.data) && !com.util.isEmpty(history.state.data.menuInfo)){
+			var options = {};
+			options.isHistory = false;
+			var data = history.state.data;
+			$p.main().wfm_side.getWindow().trv_menu.findNodeByValue(data.menuInfo.menuCode, true);
+			gcm.win.openMenu($p.main().$p, data.menuInfo.menuNm, data.menuInfo.src, data.menuInfo.menuCode, data.param, options);
+		}
 	}
 };
 
@@ -915,10 +949,12 @@ gcm.win.changePageState = function() {
  * gcm.win.addEventOnBeforeUnload();
  */
 gcm.win.addEventOnBeforeUnload = function() {
-	if (window.addEventListener) {
-		window.addEventListener("beforeunload", gcm.win.setOnBeforeUnload);
-	} else {
-		window.attachEvent("onbeforeunload", gcm.win.setOnBeforeUnload);
+	if ( gcm.IS_BEFORE_UNLOAD === true ) {	
+		if (window.addEventListener) {
+			window.addEventListener("beforeunload", gcm.win.setOnBeforeUnload);
+		} else {
+			window.attachEvent("onbeforeunload", gcm.win.setOnBeforeUnload);
+		}
 	}
 };
 
@@ -933,10 +969,12 @@ gcm.win.addEventOnBeforeUnload = function() {
  * gcm.win.removeEventOnBeforeUnload();
  */
 gcm.win.removeEventOnBeforeUnload = function() {
-	if (window.removeEventListener) {
-		window.removeEventListener("beforeunload", gcm.win.setOnBeforeUnload);
-	} else {
-		window.detachEvent("onbeforeunload", gcm.win.setOnBeforeUnload);
+	if ( gcm.IS_BEFORE_UNLOAD === true ) {	
+		if (window.removeEventListener) {
+			window.removeEventListener("beforeunload", gcm.win.setOnBeforeUnload);
+		} else {
+			window.detachEvent("onbeforeunload", gcm.win.setOnBeforeUnload);
+		}
 	}
 };
 

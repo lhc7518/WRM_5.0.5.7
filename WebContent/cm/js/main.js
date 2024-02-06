@@ -59,36 +59,62 @@ scwin.isMobileSize = function() {
  * 화면이 닫히 전에 변경된 데이터가 있는지 검사한다.
  */
 scwin.closeBeforePage = function(frameObj) {
-	if (checkBeforeCloseModified(frameObj)) {
-		if (confirm(com.data.getMessage("MSG_CM_00006"))) {
-			return true;
+	if ( gcm.IS_CLOSE_BASIC ){	
+		if (scwin.checkBeforeCloseModified(frameObj)) {
+			if (confirm(com.data.getMessage("MSG_CM_00006"))) {		//'창을 닫으시겠습니까? 변경사항이 저장되지 않을 수 있습니다.'
+				return true;
+			} else {
+				return false;
+			}
 		} else {
-			return false;
+			return true;
 		}
+		
 	} else {
-		return true;
+		if (scwin.checkBeforeCloseModified(frameObj)) {
+			com.win.confirm(com.data.getMessage("MSG_CM_00006"), function(res){
+				if ( res.clickValue ){
+					frameObj.getWindow().$p.getFrame().setUserData("close", true);
+					$p.closePopup(frameObj.getWindow().$p.getPopupId());
+					
+					//windowContainer 일 경우 팝업창 닫을 시 window 닫기 수행
+					if ( scwin.getLayoutId() == "M" ){
+						$p.top().wdc_main.closeWindow($p.top().wdc_main.getSelectedWindowId());
+					}
+					
+				} else {
+					frameObj.getWindow().$p.getFrame().setUserData("close", false);
+				}
+			});
+			return false;
+			
+		} else {
+			frameObj.getWindow().$p.getFrame().setUserData("close", true);
+			return true;
+		}		
 	}
-	
-	function checkBeforeCloseModified(frameObj) {
-		var changeCheckMainFrame = gcm.data.getChangeCheckedMainFrame(frameObj.scope.$p);
-		if (!com.util.isEmpty(changeCheckMainFrame)) {
-			var changeCheckDcList = gcm.data.getChangeCheckedMainFrame(frameObj.scope.$p)._changeCheckDcList;
 
-			if (!com.util.isEmpty(changeCheckDcList) && com.util.isArray(changeCheckDcList) && (changeCheckDcList.length > 0)) {
-				for (var i = 0; i < changeCheckDcList.length; i++) {
-					var dlObj = com.util.getComponent(changeCheckDcList[i]);
-					if (!com.util.isEmpty(dlObj) && (dlObj.getObjectType() == "dataList" || dlObj.getObjectType() == "dataMap")) {
-						if (dlObj.getModifiedIndex().length > 0) {
-							return true;
-						}
+};
+
+scwin.checkBeforeCloseModified = function(frameObj) {
+	var changeCheckMainFrame = gcm.data.getChangeCheckedMainFrame(frameObj.scope.$p);
+	if (!com.util.isEmpty(changeCheckMainFrame)) {
+		var changeCheckDcList = gcm.data.getChangeCheckedMainFrame(frameObj.scope.$p)._changeCheckDcList;
+
+		if (!com.util.isEmpty(changeCheckDcList) && com.util.isArray(changeCheckDcList) && (changeCheckDcList.length > 0)) {
+			for (var i = 0; i < changeCheckDcList.length; i++) {
+				var dlObj = com.util.getComponent(changeCheckDcList[i]);
+				if (!com.util.isEmpty(dlObj) && (dlObj.getObjectType() == "dataList" || dlObj.getObjectType() == "dataMap")) {
+					if (dlObj.getModifiedIndex().length > 0) {
+						return true;
 					}
 				}
 			}
 		}
-
-		return false;
-	};
+	}
+	return false;
 };
+
 
 /**
  * 메인 화면으로 History를 저장한다.

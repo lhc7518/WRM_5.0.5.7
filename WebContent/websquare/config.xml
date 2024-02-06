@@ -118,7 +118,9 @@
 	<engineCache compression="true" enable="true" postfix="month"/>
 	<userAgentPattern XPathParser="Edge|Trident|MSIE"/>
 	<preserveWhiteSpace value="false"/>
-	<environment cache="nocache" mode="production" postfix="day"/>
+	
+	<!-- xml 파일 cache 설정 ( nocache 일 경우 매번 로딩, cache 일 경우 postfix 기준으로 캐싱처리 : cache 설정으로 해야 debugging 가능  -->
+	<environment cache="cache" mode="production" postfix="day"/>
 	<script postfix="environment"/>
 	<emptyTag value="area,base,basefont,br,col,frame,hr,img,input,link,meta,param"/>
 	<engineLoadingMode android="0" chrome="0" ie="0" iphone="0" moz="0" opera="0" safari="0"/>

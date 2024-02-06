@@ -1588,6 +1588,9 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
 	var errors = [];
 
 	try {
+		
+		//com.data.__clearValidateError( grpObj );		//에러 메시지 출력 제거
+		
 		for (var objIdx in objArr) {
 			var obj = objArr[objIdx];
 
@@ -1670,6 +1673,9 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
             
             promise.then(function () {
                 var option = { callBackParam: { 'objId': errors[0].objId } };
+                
+              //com.data.__setValidateError(errors[0]);	//error 메시지 컴포넌트 하위에 텍스트로 출력 
+                
                 com.win.alert($p, errors[0].message, function (param) {
                     var obj = $p.getComponentById(param.objId);
                     obj.focus();
@@ -1716,6 +1722,45 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
 	} finally {
 		objArr = null;
 	}
+};
+
+
+
+//컴포넌트 하위에 textbox 로 에러 메시지 출력 (alert 형태가 아닌 textbox 를 대상 컴포넌트 하위에 추가) 
+com.data.__setValidateError = function( errors ) {
+	var objId = errors.objId;
+	var message = errors.message;
+	var errId = objId + "_error";
+	
+	var tagType = "textbox";
+	var options = { style : "width:100%; height:25px; color:red" };
+	var parentObj = com.util.getComponent( objId ).parentControl;
+	com.util.createComponent( errId, tagType, options, parentObj );
+	
+	//err text
+	var errComp = com.util.getComponent( errId );
+	errComp.setValue("message");
+	errComp.addClass("validateError");		//error class 정의 
+	
+	//obj error class 셋팅 
+	com.util.getComponent(objId).addClass("borderRed");
+	com.util.getComponent(objId).focus();
+};
+
+//에러 메시지 출력 제거 
+com.data.__clearValidateError = function( grpObj ) {
+	//해당 grpObj 하위의 error class 제거 
+	$('#'+grpObj.id).find(".borderRed").removeClass("borderRed");
+	
+	//해당 grpObj 하위의 error class 객체 제거 (jquery remove는 객체가 남아있음...) 
+	var errorObj = $('#'+grpObj.id).find(".validateError");
+	if ( errorObj.length > 0 ) {
+		for ( var i=0; i<errorObj.length; i++ ) {
+			com.util.getComponent(errorObj[i].id).remove();
+		}
+	}
+	
+	//$("#"+grpObj.id).find(".validateError").remove();		//jquery 는 remove시 웹스퀘어 scope 에는 남아있음. 
 };
 
 
