@@ -101,7 +101,7 @@ scwin.btn_confirm_onclick = function () {
 	{ id: "JOIN_DATE", mandatory: true },
 	{ id: "RESIDENT_NO", mandatory: true, minLength: 13 }];
 	
-	if (com.data.validateGroup(grp_memberBasicDetailTop, valInfo) === false) {
+	if (com.data.validateGroup(grp_memberBasicDetailTop, valInfo) === true) {
 		com.win.alert("데이터 입력을 성공적으로 완료했습니다.");
 	}
 };
