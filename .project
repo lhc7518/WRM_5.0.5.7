@@ -44,7 +44,7 @@
 		<link>
 			<name>WebSquare Configure/server.config.xml</name>
 			<type>1</type>
-			<location>C:/WEBSQUARE_DEV_PACK_SP5_5.0.5.7/workspace/websquare_home/config/websquare.xml</location>
+			<locationURI>$%7BWORKSPACE_LOC%7D/websquare_home/config/websquare.xml</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>
