@@ -79,7 +79,8 @@ scwin.closeBeforePage = function(frameObj) {
 					
 					//windowContainer 일 경우 팝업창 닫을 시 window 닫기 수행
 					if ( scwin.getLayoutId() == "M" ){
-						$p.top().wdc_main.closeWindow($p.top().wdc_main.getSelectedWindowId());
+						//$p.top().wdc_main.closeWindow($p.top().wdc_main.getSelectedWindowId());		//선택되지 않은 윈도우의 X 클릭할 경우도 있기에 X 
+						$p.top().wdc_main.closeWindow(frameObj.parentControl._windowId);
 					}
 					
 				} else {

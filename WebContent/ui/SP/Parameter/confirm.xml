@@ -32,6 +32,10 @@ scwin.onpageload = function () {
 
 	scwin.param = com.data.getParameter();
 	ibx_confirmReceive.setValue(scwin.param.msg);
+
+	//팝업창 X버튼 클릭 시 호출 할 함수 
+	//com.win.setPopCloseAction( scwin.popCloseAction );	
+
 };
 
 /**
@@ -45,6 +49,13 @@ scwin.btn_confirm_onclick = function () {
  * 취소버튼 클릭시 함수 실행하지 않고, 팝업창을 닫는다.
  */
 scwin.btn_cancel_onclick = function () {
+	com.win.closePopup();
+};
+
+
+//X버튼 클릭 시 
+scwin.popCloseAction = function() {
+	console.log("X close : scwin.popCloseAction ====");
 	com.win.closePopup();
 };
 ]]></script>

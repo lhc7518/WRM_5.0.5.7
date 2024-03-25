@@ -131,7 +131,8 @@ scwin.btn_confirm2_onclick = function () {
 		type: "browserPopup",
 		height: "270px"
 	};
-	com.win.openPopup("/ui/SP/Parameter/confirmBrowser.xml", options, data);
+	//com.win.openPopup("/ui/SP/Parameter/confirmBrowser.xml", options, data);
+	com.win.openPopup("/ui/SP/Parameter/confirm.xml", options, data);		//브라우저 팝업 별도 관리안하고 처리하기..
 };
 
 scwin.fn_alertCallback = function (arg) {
@@ -139,6 +140,7 @@ scwin.fn_alertCallback = function (arg) {
 };
 
 scwin.fn_confirmCallback = function (arg) {
+	console.log("scwin.fn_confirmCallback======", arg);
 	ibx_confirmReceive.setValue(arg);
 };
 ]]></script>

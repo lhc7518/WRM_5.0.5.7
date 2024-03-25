@@ -34,9 +34,11 @@ scwin.onpageload = function () {
 scwin.btn_confirm_onclick = function (e) {
 	try {
 		scwin.callBackParam = com.data.getParameter("callBackParam");
-		if (scwin.getMessageType() == "confirm") {
+
+		//messageType 과 상관없이 clickValue="true" 값을 넘기도록 주석 처리 (alert도 동일하게 처리하기 위해서)
+		//if (scwin.getMessageType() == "confirm") {
 			scwin.callBackParam.clickValue = true;
-		}
+		//}
 		com.win.closePopup(scwin.callBackParam);
 	} catch (ex) {
 		console.error(ex);
@@ -46,9 +48,11 @@ scwin.btn_confirm_onclick = function (e) {
 scwin.btn_cancel_onclick = function (e) {
 	try {
 		scwin.callBackParam = com.data.getParameter("callBackParam");
-		if (scwin.getMessageType() == "confirm") {
+
+		//messageType 과 상관없이 clickValue="true" 값을 넘기도록 주석 처리 (alert도 동일하게 처리하기 위해서)
+		//if (scwin.getMessageType() == "confirm") {
 			scwin.callBackParam.clickValue = false;
-		}
+		//}
 		com.win.closePopup(scwin.callBackParam);
 	} catch (ex) {
 		console.error(ex);
