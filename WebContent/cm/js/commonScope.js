@@ -1398,8 +1398,10 @@ com.data.uploadGridViewExcel = function (grdObj, options) {
 		options = {};
 	}
 	
-	var width = "490";
-	var height = "218";
+	//var width = "490";
+	//var height = "218";
+	var width = "462";
+	var height = "180";
 	var top = ((document.body.offsetHeight / 2) - (parseInt(height) / 2) + $(document).scrollTop());
 	var left = ((document.body.offsetWidth / 2) - (parseInt(width) / 2) + $(document).scrollLeft());
 	
@@ -1589,7 +1591,8 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
 
 	try {
 		
-		//com.data.__clearValidateError( grpObj );		//에러 메시지 출력 제거
+		//Type2 : comp 하위 message 출력 시 기존 message 제거 
+		//com.data.__clearValidateError( grpObj );
 		
 		for (var objIdx in objArr) {
 			var obj = objArr[objIdx];
@@ -1674,12 +1677,15 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
             promise.then(function () {
                 var option = { callBackParam: { 'objId': errors[0].objId } };
                 
-              //com.data.__setValidateError(errors[0]);	//error 메시지 컴포넌트 하위에 텍스트로 출력 
-                
+                //Type1 : alert 으로 메시지 처리 & 해당 컴포넌트 focus 
                 com.win.alert($p, errors[0].message, function (param) {
                     var obj = $p.getComponentById(param.objId);
                     obj.focus();
                 }, option);
+                
+                //Type2 : comp 하위 메시지 출력
+                //com.data.__setValidateError(errors[0]);
+
             });
  
             return false;
@@ -1725,32 +1731,34 @@ com.data.validateGroup = function (grpObj, valInfoArr, tacObj, tabId) {
 };
 
 
-
-//컴포넌트 하위에 textbox 로 에러 메시지 출력 (alert 형태가 아닌 textbox 를 대상 컴포넌트 하위에 추가) 
+//Type2: comp 하위 message 출력 
 com.data.__setValidateError = function( errors ) {
-	var objId = errors.objId;
-	var message = errors.message;
-	var errId = objId + "_error";
+	//대상 comp obj 
+	var compObj = com.util.getComponent( errors.objId );
 	
+	//대상 comp obj 에 class 셋팅 (제거 시 체크용도 & 색상?) 
+	compObj.addClass("borderRed");	
+	
+	//message textbox 생성 
 	var tagType = "textbox";
 	var options = { style : "width:100%; height:25px; color:red" };
-	var parentObj = com.util.getComponent( objId ).parentControl;
-	com.util.createComponent( errId, tagType, options, parentObj );
+	var parentObj = compObj.parentControl;
+	var errComp = com.util.createComponent( errors.objId + "_error", tagType, options, parentObj );
 	
-	//err text
-	var errComp = com.util.getComponent( errId );
-	errComp.setValue("message");
-	errComp.addClass("validateError");		//error class 정의 
+	//message textbox 값 셋팅 
+	errComp.setValue( errors.message );
+	errComp.addClass("validateError");	
 	
-	//obj error class 셋팅 
-	com.util.getComponent(objId).addClass("borderRed");
-	com.util.getComponent(objId).focus();
+	//대상 comp obj 에 focus
+	compObj.focus();
 };
 
 //에러 메시지 출력 제거 
 com.data.__clearValidateError = function( grpObj ) {
 	//해당 grpObj 하위의 error class 제거 
 	$('#'+grpObj.id).find(".borderRed").removeClass("borderRed");
+
+	//$("#"+grpObj.id).find(".validateError").remove();		//jquery remove시 웹스퀘어 scope 에는 남아있음. 	
 	
 	//해당 grpObj 하위의 error class 객체 제거 (jquery remove는 객체가 남아있음...) 
 	var errorObj = $('#'+grpObj.id).find(".validateError");
@@ -1759,8 +1767,6 @@ com.data.__clearValidateError = function( grpObj ) {
 			com.util.getComponent(errorObj[i].id).remove();
 		}
 	}
-	
-	//$("#"+grpObj.id).find(".validateError").remove();		//jquery 는 remove시 웹스퀘어 scope 에는 남아있음. 
 };
 
 
@@ -3293,8 +3299,16 @@ com.win.alert = function(messageStr, closeCallbackFncName, opts) {
 		}
 
 		if (com.util.isEmpty(closeCallbackFncName)) {
-			closeCallbackFncName = function() {
-				resolve();
+			closeCallbackFncName = function(rtn) {
+				//resolve();		//promise 사용시 return value 가 따로 없음. (confirm 은 true/false return) 
+				
+				//confirm 과 동일하게 (true 리턴,  x버튼 닫기 시 false 리턴) 
+				if (!com.util.isEmpty(rtn) && !com.util.isEmpty(rtn.clickValue)) {
+					resolve(rtn.clickValue);
+				} else {
+					resolve(false);
+				}
+				
 			};
 		}
 		
@@ -3677,6 +3691,69 @@ com.win.getLangCode();
 com.win.getLangCode = function(langCode) {
 	return WebSquare.cookie.getCookie("system_language");
 };
+
+
+/**
+ * 팝업창(wframe)의 상단 닫기 버튼(X) 클릭 시 별도 함수 호출  
+ * ( 단, 함수 지정 시 팝업창 닫기는 별도로 처리 해야함 ) 
+ *
+ * @param {Object} func      호출 할 함수 Object 또는 함수명  
+ * @memberof com.win
+ * @example
+        scwin.onpageload = function() {
+            //팝업창 X버튼 클릭 시 호출 할 함수 
+            com.win.setPopCloseAction( scwin.popCloseAction );	
+        }; 
+        
+        scwin.popCloseAction = function(){
+            console.log("X버튼 클릭 시 처리 할 로직 start !!!");
+            com.win.closePopup();	//팝업창 닫기 
+        };
+ */
+com.win.setPopCloseAction = function( func ){
+	
+	function _popCloseAction(e) {
+    	//팝업 x 버튼 클릭 시 셀렉트박스 테이블 강제로 닫기 처리 
+		if ( $('.w2table_sb.w2table').length > 0 ) {
+			$('.w2table_sb.w2table').css("display", "none");
+			$('.w2table_sb.w2table').css("visibility", "hidden");			
+		}
+    	
+        if (typeof func === "string") {
+        	func = window.WebSquare.util.getGlobalFunction($p.id + func); 
+        	if (func) func();
+        } else if (typeof func === "function") {
+        	func();
+        } else {
+        	//별도 함수 파라미터 없을 경우 (파라미터의 callback 함수 호출되도록 처리??) 
+        	
+        	//1안. 별도 function 없을 경우 지정된 callback 함수 호출 할수 있도록 처리 (파라미터에 closeCallback=true 추가) 
+        	//$p.getPopup($p.getPopupId()).getWindow().$p.getFrame()._dataObject.data.closeCallback = true;         	
+        	//com.win.closePopup();
+        	
+        	//2안. 파라미터의 callback 함수를 찾아서 callback 함수를 직접호출 ( param 값은 false 로 리턴 ) 
+        	var callbackFnStr = gcm.data.getParameter($p.getPopup($p.getPopupId()).getWindow().$p, "callbackFn");
+        	com.win.closePopup(false, callbackFnStr);
+        }
+
+        //e.preventDefault();        
+        //e.returnValue = false;        
+        return false;
+	}
+	
+	//pc 
+	$('#'+$p.getPopupId()+"_close").click(function(e){
+		_popCloseAction(e);
+    });
+	
+	//mobile
+	$('#'+$p.getPopupId()+"_close").on("touchstart", function(e){
+		_popCloseAction(e);
+    });	
+};
+
+
+
 
 
 // =============================================================================
@@ -5065,6 +5142,53 @@ com.hkey.setCkEditorShortKeyDownAction = function() {
 			}
 		}
 	}, {delay:1000, key:"ckEditorKeyDownEventBindingTimer"});
+};
+
+
+/**
+ * 단축키 정보 직접 등록 : 2024-02-26 
+ * ( 해당 화면의 onpageload 시 등록 ) 
+ * 
+ * @memberOf com.hkey
+ * @date 2024.02.26
+ * @param {Array} shortKeyArray  
+ * @author Inswave Systems
+ * @example
+var shortKeyArray = [
+	{ complexKey: "ctrl", lastKey: "q", func: "scwin.search1 },
+	{ complexKey: "alt", lastKey: "w", func: "scwin.search2 }
+];
+com.hkey.setData(shortKeyArray);
+ */
+com.hkey.setData = function(shortKeyArray) {
+	if ( shortKeyArray.length > 0 ) {
+		var programCd = "";
+		var menuInfo = com.data.getParameter("menuInfo");
+		if ( menuInfo && !com.util.isEmpty(menuInfo) && !com.util.isEmpty(menuInfo.programCd) ) {
+			programCd = menuInfo.programCd;
+		}
+		
+		if ( programCd == "" )	return;
+
+		//동일 programCd 는 제거 
+		var matchIndex = gcm.hkey.dataList.getMatchedIndex("PROGRAM_CD", programCd, true);
+		gcm.hkey.dataList.removeRows(matchIndex);
+		
+		var shortKeyData = [];
+		for ( var i in shortKeyArray ) {
+			var data = {};
+			data.EVENT_TYPE = "func";
+			data.EVENT_YN = "Y";
+			data.PROGRAM_CD = programCd;
+			data.COMPLEX_KEY = shortKeyArray[i].complexKey + "Key";
+			data.LAST_KEY = String(shortKeyArray[i].lastKey).toUpperCase();
+			data.EVENT_TARGET = shortKeyArray[i].func;
+			
+			shortKeyData.push(data);
+		}
+		
+		gcm.hkey.dataList.setJSON(shortKeyData, true);		//append
+	}
 };
 
 

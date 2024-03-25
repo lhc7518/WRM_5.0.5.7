@@ -359,10 +359,14 @@ gcm.win.openMenu = function($p, menuNm, url, menuCode, paramObj, option) {
 			data = paramObj;
 		}
 		
+		//programCd 추가 (2024-02-16) 
+		var programCd = gcm.menuComp.getMatchedColumnData("SRC_PATH", url, "PROGRAM_CD")[0] || "";
+		
 		data.menuInfo = {
 			menuNm : menuNm,
 			menuCode : menuCode,
-			src : url
+			src : url,
+			programCd
 		};
 		
 		if (!com.util.isEmpty(option) && !com.util.isEmpty(option.menuType)) {
@@ -429,15 +433,19 @@ gcm.win.openMenu = function($p, menuNm, url, menuCode, paramObj, option) {
 					if (winScope.scwin._closable === false) {
 						return false;
 					} else {
-						var isOnbeforecloseall = $p.main().wdc_main.getUserData("isOnbeforeCloseAll");
-						
-						if ((typeof isOnbeforecloseall === "undefined") || (isOnbeforecloseall === false)) {
-							var isClose = $p.main().scwin.closeBeforePage(winScope.$p.getFrame());
-							if (isClose === false) {
-								$p.main().wdc_main.setFocus($p.main().wdc_main.getSelectedIndex());
+						//수정버전 (기본이거나, wframe 일경우 getUserData('close') == false 일 경우 체크) - LHC 
+						if ( gcm.IS_CLOSE_BASIC || $p.top().wdc_main.getWindow(this._windowId).$p.getFrame().getUserData('close') !== true ) {
+							
+							var isOnbeforecloseall = $p.main().wdc_main.getUserData("isOnbeforeCloseAll");							
+							if ((typeof isOnbeforecloseall === "undefined") || (isOnbeforecloseall === false)) {
+								var isClose = $p.main().scwin.closeBeforePage(winScope.$p.getFrame());
+								if (isClose === false) {
+									$p.main().wdc_main.setFocus($p.main().wdc_main.getSelectedIndex());
+								}
+								$p.main().wdc_main.setUserData("isOnbeforeCloseAll", false);
+								return isClose;
 							}
-							$p.main().wdc_main.setUserData("isOnbeforeCloseAll", false);
-							return isClose;
+							
 						}
 						
 						return true;
@@ -463,9 +471,27 @@ gcm.win.openMenu = function($p, menuNm, url, menuCode, paramObj, option) {
 				}
 			});
 		} else if(layout == "S") {
-			var isClose = $p.main().scwin.closeBeforePage($p.main().wfm_layout.getWindow().$p.getFrame()); 
+			var isClose = true;
+			if ( gcm.IS_CLOSE_BASIC ) {				
+				isClose = $p.main().scwin.closeBeforePage($p.main().wfm_layout.getWindow().$p.getFrame()); 
+			} else {
+				var frameObj = $p.main().wfm_layout.getWindow().$p.getFrame();
+				if ( $p.main().scwin.checkBeforeCloseModified(frameObj) ) {
+					com.win.confirm("수정된 사항에 대해서 저장하지 않았습니다. 저장하지 않고 화면을 닫으시겠습니까?", function(res){
+						if ( res.clickValue ) {
+							return _wframeOpen();
+						}
+					});
+					isClose = false;
+				}
+			}
 			
-			if (isClose) {
+			if ( isClose ) {
+				return _wframeOpen();
+			}
+			
+			//wframe open 시 처리 로직 
+			async function _wframeOpen() {
 				var programCd = $p.main().wfm_side.getWindow().dlt_menu.getMatchedColumnData("SRC_PATH", url, "PROGRAM_CD");
 				data.menuInfo.programCd = programCd[0];
 		
@@ -481,13 +507,14 @@ gcm.win.openMenu = function($p, menuNm, url, menuCode, paramObj, option) {
 						data : data
 					}
 				};
-				
+
 				return Promise.resolve().then(function() {
 					return $p.main().wfm_layout.setSrc(url, param);
-				});
-			} else {
-				return false;
+				}).then(function(isOpen) {
+					return isOpen;
+				});				
 			}
+			
 		}
 	}
 	return false;
@@ -521,7 +548,8 @@ gcm.win.openMenu = function($p, menuNm, url, menuCode, paramObj, option) {
 */
 gcm.win.openPopup = function($p, url, opt, data) {
 	data.menuInfo = {
-		src : url
+		src : url,
+		programCd : opt.id		//팝업의 id 를 programId 를 셋팅(2024-02-16) 
 	};
 	
 	var _dataObj = {
@@ -643,9 +671,10 @@ gcm.win.openPopup = function($p, url, opt, data) {
 				return false;
 			}
 				
-			var messageType = gcm.data.getParameter(popupWindow.$p, "messageType") || "alert";
+			var messageType = gcm.data.getParameter(popupWindow.$p, "messageType");
 			var callbackFuncStr = gcm.data.getParameter(popupWindow.$p, "callbackFn");		
 			var callbackFunc = gcm.util.getCallBackFunction(callbackFuncStr);
+			var closeCallback = gcm.data.getParameter(popupWindow.$p, "closeCallback");		//x버튼 닫기 시 closeCallback 함수 호출용 구분 인자 
 
 			if (typeof callbackFunc === "function") { 
                 var popup = popupWindow.scwin._popup;
@@ -653,18 +682,23 @@ gcm.win.openPopup = function($p, url, opt, data) {
                     callbackFunc(com.util.getJSON(popup.callbackParam));
                 } else if (!com.util.isEmpty(popupWindow.$p.main().scwin._popup) && !com.util.isEmpty(popupWindow.$p.main().scwin._popup.callbackParam)) {
                     callbackFunc(com.util.getJSON(popupWindow.$p.main().scwin._popup.callbackParam));
-				} else {
-					if (messageType === "confirm") {
-						callbackFunc({ clickValue : false });
+                } else if (!com.util.isEmpty(closeCallback) && closeCallback ) {
+                	callbackFunc();		//x버튼 닫기 시 callback 함수 호출 
+                } else {
+					if (messageType === "confirm" || messageType === "alert") {
+						callbackFunc({ clickValue : false });	//confirm 창 닫기 시 parameter 가 없을 경우 기본적으로 false 리턴 
 					}
 				}
 			}
 			return true;
 		},
-		popupUrl : "../popup"
+		popupUrl : "../popup"		//팝업경로 ( 기본사용 시  => ../websquare/popup.html ) 
 	};
 
 	$p.openPopup(gcm.CONTEXT_PATH + url, options);
+	
+	
+	//console.log("popupWin", $p.getPopup(opt.id));		//팝업 접근 가능하나, scwin 등의 객체는 바로 접근 불가함. (꼭 필요한 경우 timeout 으로 접근 가능할듯...) 
 };
 
 
@@ -686,6 +720,10 @@ gcm.win.closePopup = function ($p, popId, callbackParamStr, callbackFnStr) {
                 $p.closePopup(popId);
             } else {
                 $w.closePopup();
+                
+                //파라미터 callback 함수 셋팅 필요함.... 
+                callbackFnStr = com.util.isEmpty(callbackFnStr) ? com.data.getParameter("callbackFn") : callbackFnStr;
+                
                 var func = gcm.util.getCallBackFunction(callbackFnStr);
                 
                 if (func) {
@@ -932,8 +970,11 @@ gcm.win.changePageState = function() {
 			var options = {};
 			options.isHistory = false;
 			var data = history.state.data;
+			
 			$p.main().wfm_side.getWindow().trv_menu.findNodeByValue(data.menuInfo.menuCode, true);
-			gcm.win.openMenu($p.main().$p, data.menuInfo.menuNm, data.menuInfo.src, data.menuInfo.menuCode, data.param, options);
+			
+			//gcm.win.openMenu($p.main().$p, data.menuInfo.menuNm, data.menuInfo.src, data.menuInfo.menuCode, data.param, options);
+			gcm.win.openMenu($p.main().$p, data.menuInfo.menuNm, data.menuInfo.src, data.menuInfo.menuCode, data, options);		//확인 필요함 ...
 		}
 	}
 };
@@ -1035,18 +1076,24 @@ gcm.win.getProgramId = function($p) {
 	var programId = "";
 	
 	if (com.util.isEmpty($p.getMetaValue("meta_programId"))) {
+		
+		//팝업에서는 팝업ID 를 programCd 로 설정 (2024-02-16) 
+		var menuInfo = com.data.getParameter("menuInfo");
+		if ( !com.util.isEmpty(menuInfo) && !com.util.isEmpty(menuInfo.programCd) ) {
+			return menuInfo.programCd;
+		}
+
 		// 웹스퀘어 파일명을 프로그램 아이디와 동일하게 작성한 경우에만 정상 동작한다.
-		var src = ""; 
-	
+		var src = ""; 	
 		if (!com.util.isEmpty($p.getFrame())) {
 			src = $p.getFrame().getSrc();
 		} else {
 			src = $p.getParameter("w2xPath");
-		}
-		
+		}		
 		if (src.indexOf("/ui/") >= 0) {
 			programId = src.substring(src.lastIndexOf("/") + 1, src.lastIndexOf("."));
 		}
+		
 	} else {
 		programId = $p.getMetaValue("meta_programId");
 	}
