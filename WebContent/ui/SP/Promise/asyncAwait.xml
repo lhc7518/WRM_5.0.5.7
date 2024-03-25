@@ -262,14 +262,14 @@ scwin.onpageload = function () {
 };
 
 scwin.btn_trigger1_onclick = async function (e) {
-	await com.win.alert("Step - 1");
-	console.log("Step - 1");
+	var result = await com.win.alert("Step - 1");
+	console.log("Step - 1", result);
 
-	await com.win.alert("Step - 2");
-	console.log("Step - 2");
+	result = await com.win.alert("Step - 2");
+	console.log("Step - 2", result);
 
-	await com.win.alert("Step - 3");
-	console.log("Step - 3");
+	result = await com.win.alert("Step - 3");
+	console.log("Step - 3", result); 
 };
 
 
