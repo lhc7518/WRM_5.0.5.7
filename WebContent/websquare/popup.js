@@ -16,7 +16,7 @@ function initPopup() {
 (function() {
 	initPopup();
 
-	if (movePage == "") {
+	if ((typeof movePage === "undefined") || (movePage === "")) {
 		promiseObj = WebSquare.startApplication();
 	} else {
 		promiseObj = WebSquare.startApplication(WebSquareExternal.w2xPath);

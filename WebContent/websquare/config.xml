@@ -11,9 +11,9 @@
 		<loadingMode value="auto"/>
 		<common name="com" value="true"/>
 		<commonPath>
-			<path src="/cm/js/commonGlobal.js"/>
+			<path src="/cm/js/commonGlobal.js"/> 
 			<path src="/cm/js/commonScope.js"/>
-			<path src="/cm/js/main.js"/>
+			<path src="/cm/js/main.js"/>     
 		</commonPath>
 	</wpack>
 	<allValue value="all"/>
@@ -66,6 +66,10 @@
 	</wframe>
 	<clearMemory value="false"/>
 	<stylesheet earlyImportList="/cm/css/base.css,/cm/css/contents.css" enable="true" import="link" value="stylesheet_ext.css"/>
+	
+	<!-- mobile 시 옵션 확인 필요함... -->
+<!--	 <mobile preventTouch="true" hideAddressBar="true" /> 	-->
+	
 	<mediaInfo>
 		<media maxWidth="" minWidth="1025" name="desktop"/>
 		<media maxWidth="1024" minWidth="768" name="tablet"/>
