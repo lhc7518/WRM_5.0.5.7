@@ -70,7 +70,7 @@ export default {
     "date": {
       "serverDate": {
         "@autoupdateinterval": "3600",
-        "@enable": "true"
+        "@enable": "false"
       }
     },
     "deprecated": {

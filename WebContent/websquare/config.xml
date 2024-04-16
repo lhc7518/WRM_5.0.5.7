@@ -23,7 +23,7 @@
 	<language value="ko"/>
 	<useItemLocale value="false"/>
 	<date>
-		<serverDate autoupdateinterval="3600" enable="true"/>
+		<serverDate autoupdateinterval="3600" enable="false"/>
 	</date>
 	<deprecated>
 		<sync value=""/>
